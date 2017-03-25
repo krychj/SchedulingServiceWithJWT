@@ -19,6 +19,15 @@ public class MainServiceImpl implements MainService {
 	@Context
 	HttpServletRequest currentRequest;
 		
+	@Override
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/test")
+	public ScheduleDescriptor getTestSchedule() {				
+		ScheduleDescriptor scheduleDesc = new ScheduleDescriptor("Test");				
+		return scheduleDesc;
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	@GET
