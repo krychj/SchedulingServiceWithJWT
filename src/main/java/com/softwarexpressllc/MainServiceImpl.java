@@ -44,6 +44,7 @@ public class MainServiceImpl implements MainService {
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured ({Role.ROLE_1})
 	@Path("/schedule")
 	public String schedule(ScheduleDescriptor scheduleDesc) {		
 		if(scheduleDesc != null) {
