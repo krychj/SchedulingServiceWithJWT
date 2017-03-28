@@ -2,10 +2,7 @@ package com.softwarexpressllc;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -26,7 +23,7 @@ public class AuthenticationEndpoint {
 	
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes("application/x-www-form-urlencoded")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)		//"application/x-www-form-urlencoded"
 	@Path("/auth1")
 	public Response authenticateUser(@FormParam("username") String username, @FormParam("password") String password) {
 		try {
@@ -90,11 +87,11 @@ public class AuthenticationEndpoint {
 
 		long nowMillis = System.currentTimeMillis();
 		Date now = new Date(nowMillis);			
-		
+ 
 		byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary("secret");
 		Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
 		
-		JwtBuilder builder = Jwts.builder()
+		JwtBuilder builder = Jwts.builder().setHeaderParam("typ", "JWT")
 				.setIssuer("softwarexpressll.com")
 				.setIssuedAt(now)				
 				.setSubject("User1")

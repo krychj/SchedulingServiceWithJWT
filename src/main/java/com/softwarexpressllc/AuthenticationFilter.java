@@ -80,7 +80,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
 		    @Override
 		    public String getAuthenticationScheme() {
-		        return null;
+		        return "Bearer";
 		    }
 		});
 	}
@@ -103,7 +103,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 				return false;
 			}
 			String scope = (String) claims.getBody().get("scope");
-			
+			if(scope.equals("admin") == false) {
+				return false;
+			}			
 			return true;
 		} catch (Exception e) {
 			return false;
