@@ -57,7 +57,7 @@ public class MainServiceImpl implements MainService {
 			schedules.add(scheduleDesc);
 			return "Schedule: " + "<" + scheduleDesc.getScheduleName() + "> was accepted.";
 		} else {
-			return "No schedule recieved";
+			return "No schedule received";
 		}	
 	}
 }

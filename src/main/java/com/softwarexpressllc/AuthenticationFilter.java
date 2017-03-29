@@ -28,11 +28,12 @@ import javax.xml.bind.DatatypeConverter;
 public class AuthenticationFilter implements ContainerRequestFilter {
 
 	@Override
-	public void filter(ContainerRequestContext requestContext) throws IOException {		
+	public void filter(ContainerRequestContext requestContext) throws IOException {
 		// Get the HTTP Authorization header from the request
 		String authorizationHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
-		
-		// Check if the HTTP Authorization header is present and formatted correctly
+
+		// Check if the HTTP Authorization header is present and formatted
+		// correctly
 		if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
 			throw new NotAuthorizedException("Authorization header must be provided");
 		}
@@ -40,75 +41,72 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 		String token = authorizationHeader.substring("Bearer".length()).trim();
 		try {
 			boolean isTokenValid = validateToken(token);
-			if(!isTokenValid) {
+			if (!isTokenValid) {
 				requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 			}
 		} catch (Exception e) {
 			requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 		}
-		
+
 		final Principal userPrincipal = requestContext.getSecurityContext().getUserPrincipal();
-		//Check if valid user
+		// Check if valid user
 		requestContext.setSecurityContext(new SecurityContext() {
-			
-		    @Override
-		    public Principal getUserPrincipal() {
 
-		        return new Principal() {
+			@Override
+			public Principal getUserPrincipal() {
 
-		            @Override
-		            public String getName() {
-		                if(userPrincipal != null) {
-		                	return userPrincipal.getName();
-		                } else {
-		                	return null;
-		                }
-		            	
-		            }
-		        };
-		    }
+				return new Principal() {
 
-		    @Override
-		    public boolean isUserInRole(String role) {
-		        return true;
-		    }
+					@Override
+					public String getName() {
+						if (userPrincipal != null) {
+							return userPrincipal.getName();
+						} else {
+							return null;
+						}
 
-		    @Override
-		    public boolean isSecure() {
-		        return false;
-		    }
+					}
+				};
+			}
 
-		    @Override
-		    public String getAuthenticationScheme() {
-		        return "Bearer";
-		    }
+			@Override
+			public boolean isUserInRole(String role) {
+				return true;
+			}
+
+			@Override
+			public boolean isSecure() {
+				return false;
+			}
+
+			@Override
+			public String getAuthenticationScheme() {
+				return "Bearer";
+			}
 		});
 	}
 
-	
 	private boolean validateToken(String token) throws Exception {
 		try {
-			SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;						
+			SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 			byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary("secret");
 			Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
-			
-			Jws<Claims> claims = Jwts.parser()
-					  .setSigningKey(signingKey)
-					  .parseClaimsJws(token);
-			
-			//At the minimum check time-related claims and scope 
+
+			Jws<Claims> claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token);
+
+			// At the minimum check time-related claims and scope
 			Date exp = claims.getBody().getExpiration();
 			Date currDate = new Date();
-			if(exp.compareTo(currDate) < 0) {
+			if (exp.compareTo(currDate) < 0) {
 				return false;
 			}
 			String scope = (String) claims.getBody().get("scope");
-			if(scope.equals("admin") == false) {
+			if (scope.equals("admin") == false) {
 				return false;
-			}			
+			}
 			return true;
 		} catch (Exception e) {
 			return false;
-		}				
+		}
 	}
 }
