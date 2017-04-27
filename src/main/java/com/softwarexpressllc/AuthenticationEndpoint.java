@@ -104,4 +104,27 @@ public class AuthenticationEndpoint {
 		String token = builder.compact();		
 		return "Bearer " + token;
 	}
+	
+	private String issueToken2(String username) {		
+		SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256;
+
+		long nowMillis = System.currentTimeMillis();
+		Date now = new Date(nowMillis);			
+ 
+		byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary("secret");
+		Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
+		
+		JwtBuilder builder = Jwts.builder().setHeaderParam("typ", "JWT")
+				.setIssuer("softwarexpressll.com")
+				.setIssuedAt(now)				
+				.setSubject("User1")
+				.claim("scope", "admin")				
+				.signWith(signatureAlgorithm, signingKey);
+		
+		long expMillis = nowMillis + 1 * 60 * 60 * 1000;
+		Date exp = new Date(expMillis);
+		builder.setExpiration(exp);
+		String token = builder.compact();		
+		return "Bearer " + token;
+	}
 }
