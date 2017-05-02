@@ -1,11 +1,15 @@
 package com.softwarexpressllc;
 
 import java.security.Key;
+import java.security.KeyPair;
 import java.util.Date;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.impl.crypto.RsaProvider;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.ws.rs.Consumes;
@@ -104,27 +108,56 @@ public class AuthenticationEndpoint {
 		String token = builder.compact();		
 		return "Bearer " + token;
 	}
+		
+	KeyPair keyPair;
 	
 	private String issueToken2(String username) {		
 		SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256;
 
 		long nowMillis = System.currentTimeMillis();
-		Date now = new Date(nowMillis);			
- 
-		byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary("secret");
-		Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
+		Date now = new Date(nowMillis);
 		
+		keyPair = RsaProvider.generateKeyPair();
 		JwtBuilder builder = Jwts.builder().setHeaderParam("typ", "JWT")
 				.setIssuer("softwarexpressll.com")
 				.setIssuedAt(now)				
 				.setSubject("User1")
 				.claim("scope", "admin")				
-				.signWith(signatureAlgorithm, signingKey);
+				.signWith(signatureAlgorithm, keyPair.getPrivate());
 		
 		long expMillis = nowMillis + 1 * 60 * 60 * 1000;
 		Date exp = new Date(expMillis);
 		builder.setExpiration(exp);
 		String token = builder.compact();		
-		return "Bearer " + token;
+		//return "Bearer " + token;
+		return token;
+	}
+	
+	private boolean validateToken2(String token) throws Exception {
+		try {
+			Jws<Claims> claims = Jwts.parser().setSigningKey(keyPair.getPublic()).parseClaimsJws(token);
+
+			// At the minimum check time-related claims and scope
+			Date exp = claims.getBody().getExpiration();
+			Date currDate = new Date();
+			if (exp.compareTo(currDate) < 0) {
+				return false;
+			}
+			String scope = (String) claims.getBody().get("scope");
+			if (scope.equals("admin") == false) {
+				return false;
+			}
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	
+	public static void main(String [] args) throws Exception {
+		AuthenticationEndpoint endpoint = new AuthenticationEndpoint();
+		String token = endpoint.issueToken2("Jarek");
+		System.out.println(token);		
+		boolean valid = endpoint.validateToken2(token);
+		System.out.println("Token valid: " + valid);
 	}
 }
